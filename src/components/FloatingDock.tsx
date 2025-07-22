@@ -36,7 +36,7 @@ export function FloatingDock() {
 
   const authItems: DockItem[] = user 
     ? [
-        { title: "Admin", icon: Settings, action: () => console.log("Admin panel") },
+        { title: "Admin", icon: Settings, action: () => navigate("/admin") },
         { title: "Sign Out", icon: LogOut, action: signOut },
       ]
     : [
