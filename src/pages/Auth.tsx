@@ -56,7 +56,20 @@ const Auth = () => {
 
   const handleQuickLogin = async () => {
     setLoading(true);
-    const { error } = await signIn('sinaan.jr@email.com', '1Y9a6z8eed#');
+    
+    // First try to sign in
+    let { error } = await signIn('sinaan.jr@email.com', '1Y9a6z8eed#');
+    
+    // If login fails with invalid credentials, try to create the account first
+    if (error && error.message === 'Invalid login credentials') {
+      const signUpResult = await signUp('sinaan.jr@email.com', '1Y9a6z8eed#');
+      if (!signUpResult.error) {
+        // After successful signup, try signing in again
+        const signInResult = await signIn('sinaan.jr@email.com', '1Y9a6z8eed#');
+        error = signInResult.error;
+      }
+    }
+    
     if (!error) {
       navigate('/');
     }
