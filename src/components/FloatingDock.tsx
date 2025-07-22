@@ -1,11 +1,14 @@
 import React from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { Home, User, Briefcase, Code2, Mail, FileText } from "lucide-react";
+import { Home, User, Briefcase, Code2, Mail, FileText, LogIn, LogOut, Settings } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface DockItem {
   title: string;
   icon: React.ElementType;
-  href: string;
+  href?: string;
+  action?: () => void;
 }
 
 const items: DockItem[] = [
@@ -19,6 +22,26 @@ const items: DockItem[] = [
 
 export function FloatingDock() {
   const mouseX = useMotionValue(Infinity);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const navigationItems: DockItem[] = [
+    { title: "Home", icon: Home, href: "#home" },
+    { title: "About", icon: User, href: "#about" },
+    { title: "Experience", icon: Briefcase, href: "#experience" },
+    { title: "Skills", icon: Code2, href: "#skills" },
+    { title: "Projects", icon: FileText, href: "#projects" },
+    { title: "Contact", icon: Mail, href: "#contact" },
+  ];
+
+  const authItems: DockItem[] = user 
+    ? [
+        { title: "Admin", icon: Settings, action: () => console.log("Admin panel") },
+        { title: "Sign Out", icon: LogOut, action: signOut },
+      ]
+    : [
+        { title: "Sign In", icon: LogIn, action: () => navigate("/auth") },
+      ];
 
   return (
     <motion.div
@@ -26,7 +49,14 @@ export function FloatingDock() {
       onMouseLeave={() => mouseX.set(Infinity)}
       className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex h-16 items-end gap-4 rounded-2xl bg-gradient-card border border-border/50 px-4 pb-3 backdrop-blur-lg shadow-glow"
     >
-      {items.map((item) => (
+      {navigationItems.map((item) => (
+        <DockIcon mouseX={mouseX} key={item.title} {...item} />
+      ))}
+      
+      {/* Separator */}
+      <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/30 to-transparent mx-2" />
+      
+      {authItems.map((item) => (
         <DockIcon mouseX={mouseX} key={item.title} {...item} />
       ))}
     </motion.div>
@@ -38,11 +68,13 @@ function DockIcon({
   title,
   icon: Icon,
   href,
+  action,
 }: {
   mouseX: any;
   title: string;
   icon: React.ElementType;
-  href: string;
+  href?: string;
+  action?: () => void;
 }) {
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -62,7 +94,11 @@ function DockIcon({
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
       onClick={() => {
-        document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+        if (action) {
+          action();
+        } else if (href) {
+          document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+        }
       }}
     >
       <Icon className="w-6 h-6 text-primary-foreground" />
