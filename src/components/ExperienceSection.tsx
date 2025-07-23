@@ -2,9 +2,27 @@ import { motion } from "framer-motion";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Calendar, MapPin, Building } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function ExperienceSection() {
-  const experiences = [
+  const [experiences, setExperiences] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchExperience = async () => {
+      const { data } = await supabase
+        .from('professional_experience')
+        .select('*')
+        .order('display_order');
+      
+      if (data) setExperiences(data);
+    };
+
+    fetchExperience();
+  }, []);
+
+  // Fallback data
+  const fallbackExperiences = [
     {
       title: "Junior Network Engineer",
       company: "TechFlow Solutions",
@@ -52,6 +70,8 @@ export function ExperienceSection() {
     }
   ];
 
+  const displayExperiences = experiences.length > 0 ? experiences : fallbackExperiences;
+
   return (
     <section id="experience" className="py-20 relative overflow-hidden">
       <div className="container mx-auto px-6">
@@ -72,7 +92,7 @@ export function ExperienceSection() {
         </motion.div>
 
         <div className="max-w-4xl mx-auto">
-          {experiences.map((experience, index) => (
+          {displayExperiences.map((experience: any, index: number) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 50 }}
@@ -82,7 +102,7 @@ export function ExperienceSection() {
               className="relative"
             >
               {/* Timeline line */}
-              {index < experiences.length - 1 && (
+              {index < displayExperiences.length - 1 && (
                 <div className="absolute left-8 top-24 w-0.5 h-32 bg-gradient-to-b from-primary to-primary/20" />
               )}
               
@@ -100,21 +120,23 @@ export function ExperienceSection() {
                     <div className="space-y-2">
                       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
                         <h3 className="text-2xl font-bold text-foreground">
-                          {experience.title}
+                          {experience.job_title || experience.title}
                         </h3>
-                        <Badge 
-                          variant="secondary" 
-                          className="w-fit bg-primary/10 text-primary border-primary/20"
-                        >
-                          {experience.type}
-                        </Badge>
+                        {(experience.is_current || experience.type) && (
+                          <Badge 
+                            variant="secondary" 
+                            className="w-fit bg-primary/10 text-primary border-primary/20"
+                          >
+                            {experience.is_current ? 'Current' : experience.type}
+                          </Badge>
+                        )}
                       </div>
                       
                       <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <Building className="w-4 h-4" />
                           <span className="font-semibold text-foreground">
-                            {experience.company}
+                            {experience.company_name || experience.company}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -123,38 +145,57 @@ export function ExperienceSection() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
-                          <span>{experience.period}</span>
+                          <span>
+                            {experience.period || `${new Date(experience.start_date).getFullYear()} - ${experience.end_date ? new Date(experience.end_date).getFullYear() : 'Present'}`}
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     {/* Description */}
                     <div className="space-y-3">
-                      <ul className="space-y-2">
-                        {experience.description.map((item, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-muted-foreground">
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      {experience.description && Array.isArray(experience.description) ? (
+                        <ul className="space-y-2">
+                          {experience.description.map((item: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-2 text-muted-foreground">
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : experience.description ? (
+                        <p className="text-muted-foreground">{experience.description}</p>
+                      ) : null}
+                      
+                      {experience.achievements && experience.achievements.length > 0 && (
+                        <ul className="space-y-2">
+                          {experience.achievements.map((achievement: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-2 text-muted-foreground">
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                              <span>{achievement}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
 
                     {/* Technologies */}
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-foreground">Technologies Used:</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {experience.technologies.map((tech, idx) => (
-                          <Badge 
-                            key={idx}
-                            variant="outline" 
-                            className="border-primary/30 text-primary bg-primary/5"
-                          >
-                            {tech}
-                          </Badge>
-                        ))}
+                    {(experience.technologies_used || experience.technologies) && (
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-foreground">Technologies Used:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {(experience.technologies_used || experience.technologies)?.map((tech: string, idx: number) => (
+                            <Badge 
+                              key={idx}
+                              variant="outline" 
+                              className="border-primary/30 text-primary bg-primary/5"
+                            >
+                              {tech}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </Card>

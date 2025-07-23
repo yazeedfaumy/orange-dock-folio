@@ -2,14 +2,38 @@ import { motion } from "framer-motion";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { MapPin, Calendar, GraduationCap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function AboutSection() {
+  const [aboutContent, setAboutContent] = useState<any>(null);
+  const [contactInfo, setContactInfo] = useState<any>(null);
+
   const stats = [
     { label: "Years Experience", value: "1+" },
     { label: "Projects Completed", value: "15+" },
     { label: "Networks Deployed", value: "8+" },
     { label: "Certifications", value: "3" },
   ];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: about } = await supabase
+        .from('about_content')
+        .select('*')
+        .single();
+      
+      const { data: contact } = await supabase
+        .from('contact_info')
+        .select('*')
+        .single();
+      
+      if (about) setAboutContent(about);
+      if (contact) setContactInfo(contact);
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <section id="about" className="py-20 relative overflow-hidden">
@@ -25,8 +49,7 @@ export function AboutSection() {
             About <span className="text-primary">Me</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Dedicated network engineer with a passion for building reliable, scalable 
-            network infrastructures that enable business growth and innovation.
+            {aboutContent?.content || "Dedicated network engineer with a passion for building reliable, scalable network infrastructures that enable business growth and innovation."}
           </p>
         </motion.div>
 
@@ -43,7 +66,7 @@ export function AboutSection() {
               <div className="space-y-6">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="w-4 h-4" />
-                  <span>San Francisco, CA</span>
+                  <span>{contactInfo?.location || "San Francisco, CA"}</span>
                 </div>
                 
                 <p className="text-lg leading-relaxed">

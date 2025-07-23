@@ -49,7 +49,8 @@ const Admin = () => {
     location: '',
     linkedin_url: '',
     github_url: '',
-    twitter_url: ''
+    twitter_url: '',
+    cv_url: ''
   });
   const [smtpConfig, setSmtpConfig] = useState({
     smtp_host: '',
@@ -183,6 +184,48 @@ const Admin = () => {
       toast({
         title: "Error",
         description: "Failed to update contact information.",
+        variant: "destructive",
+      });
+    }
+    setLoading(false);
+  };
+
+  const handleCVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `cv.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('cvs')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('cvs')
+        .getPublicUrl(fileName);
+
+      const updatedContactInfo = { ...contactInfo, cv_url: data.publicUrl };
+      setContactInfo(updatedContactInfo);
+
+      const { error: updateError } = await supabase
+        .from('contact_info')
+        .upsert(updatedContactInfo);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Success",
+        description: "CV uploaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload CV.",
         variant: "destructive",
       });
     }
@@ -378,6 +421,27 @@ const Admin = () => {
                       onChange={(e) => setContactInfo({ ...contactInfo, twitter_url: e.target.value })}
                       placeholder="https://twitter.com/yourusername"
                     />
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <Label htmlFor="cv-upload">Upload CV</Label>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      id="cv-upload"
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleCVUpload}
+                      className="flex-1"
+                    />
+                    {contactInfo.cv_url && (
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open(contactInfo.cv_url, '_blank')}
+                      >
+                        View Current CV
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <Button onClick={saveContactInfo} disabled={loading}>

@@ -15,9 +15,60 @@ import {
   Database,
   GraduationCap
 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SkillsSection() {
-  const skillCategories = [
+  const [skillCategories, setSkillCategories] = useState<any[]>([]);
+  const [technicalSkills, setTechnicalSkills] = useState<any[]>([]);
+  const [certifications, setCertifications] = useState<any[]>([]);
+  const [toolsTech, setToolsTech] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // Fetch skill categories
+      const { data: categories } = await supabase
+        .from('skill_categories')
+        .select('*')
+        .order('display_order');
+
+      // Fetch technical skills
+      const { data: skills } = await supabase
+        .from('technical_skills')
+        .select('*, skill_categories(name)')
+        .order('display_order');
+
+      // Fetch certifications
+      const { data: certs } = await supabase
+        .from('certifications')
+        .select('*')
+        .order('display_order');
+
+      // Fetch tools & technologies
+      const { data: tools } = await supabase
+        .from('tools_technologies')
+        .select('*')
+        .order('display_order');
+
+      if (categories) {
+        // Group skills by category
+        const groupedSkills = categories.map(category => ({
+          ...category,
+          skills: skills?.filter(skill => skill.category_id === category.id) || []
+        }));
+        setSkillCategories(groupedSkills);
+      }
+      
+      if (skills) setTechnicalSkills(skills);
+      if (certs) setCertifications(certs);
+      if (tools) setToolsTech(tools);
+    };
+
+    fetchData();
+  }, []);
+
+  // Fallback data
+  const fallbackSkillCategories = [
     {
       title: "Networking Protocols",
       icon: Network,
@@ -68,13 +119,13 @@ export function SkillsSection() {
     }
   ];
 
-  const certifications = [
+  const displaySkillCategories = skillCategories.length > 0 ? skillCategories : fallbackSkillCategories;
+  const displayCertifications = certifications.length > 0 ? certifications : [
     "CCNA (Cisco Certified Network Associate)",
-    "CompTIA Network+",
+    "CompTIA Network+", 
     "AWS Cloud Practitioner"
   ];
-
-  const tools = [
+  const displayTools = toolsTech.length > 0 ? toolsTech : [
     "Wireshark", "SolarWinds", "PRTG", "Nagios", 
     "GNS3", "Packet Tracer", "Putty", "SecureCRT",
     "Visio", "Lucidchart", "Excel", "PowerShell"
@@ -101,7 +152,7 @@ export function SkillsSection() {
 
         {/* Skill Categories */}
         <div className="grid lg:grid-cols-2 gap-8 mb-16">
-          {skillCategories.map((category, categoryIndex) => (
+          {displaySkillCategories.map((category, categoryIndex) => (
             <motion.div
               key={category.title}
               initial={{ opacity: 0, y: 50 }}
@@ -118,7 +169,7 @@ export function SkillsSection() {
                 </div>
                 
                 <div className="space-y-4">
-                  {category.skills.map((skill, skillIndex) => (
+                  {category.skills.map((skill: any, skillIndex: number) => (
                     <motion.div
                       key={skill.name}
                       initial={{ opacity: 0, x: -20 }}
@@ -129,9 +180,9 @@ export function SkillsSection() {
                     >
                       <div className="flex justify-between items-center">
                         <span className="font-medium">{skill.name}</span>
-                        <span className="text-primary font-semibold">{skill.level}%</span>
+                        <span className="text-primary font-semibold">{skill.proficiency_level || skill.level}%</span>
                       </div>
-                      <Progress value={skill.level} className="h-2" />
+                      <Progress value={skill.proficiency_level || skill.level} className="h-2" />
                     </motion.div>
                   ))}
                 </div>
@@ -156,7 +207,7 @@ export function SkillsSection() {
               <h3 className="text-2xl font-bold">Certifications</h3>
             </div>
             <div className="grid md:grid-cols-3 gap-4">
-              {certifications.map((cert, index) => (
+              {displayCertifications.map((cert: any, index: number) => (
                 <motion.div
                   key={cert}
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -165,7 +216,7 @@ export function SkillsSection() {
                   viewport={{ once: true }}
                   className="p-4 bg-primary/10 rounded-lg border border-primary/20 text-center"
                 >
-                  <p className="font-semibold text-primary">{cert}</p>
+                  <p className="font-semibold text-primary">{typeof cert === 'string' ? cert : cert.name}</p>
                 </motion.div>
               ))}
             </div>
@@ -187,7 +238,7 @@ export function SkillsSection() {
               <h3 className="text-2xl font-bold">Tools & Technologies</h3>
             </div>
             <div className="flex flex-wrap gap-3">
-              {tools.map((tool, index) => (
+              {displayTools.map((tool: any, index: number) => (
                 <motion.div
                   key={tool}
                   initial={{ opacity: 0, scale: 0 }}
@@ -199,7 +250,7 @@ export function SkillsSection() {
                     variant="secondary" 
                     className="px-4 py-2 bg-secondary/50 hover:bg-primary/10 transition-colors cursor-default"
                   >
-                    {tool}
+                    {typeof tool === 'string' ? tool : tool.name}
                   </Badge>
                 </motion.div>
               ))}

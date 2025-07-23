@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { Home, User, Briefcase, Code2, Mail, FileText, LogIn, LogOut, Settings } from "lucide-react";
+import { Home, User, Briefcase, Code2, Mail, FileText, LogIn, LogOut, GraduationCap } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
@@ -28,15 +28,15 @@ export function FloatingDock() {
   const navigationItems: DockItem[] = [
     { title: "Home", icon: Home, href: "#home" },
     { title: "About", icon: User, href: "#about" },
-    { title: "Experience", icon: Briefcase, href: "#experience" },
     { title: "Skills", icon: Code2, href: "#skills" },
+    { title: "Experience", icon: Briefcase, href: "#experience" },
+    { title: "Education", icon: GraduationCap, href: "#education" },
     { title: "Projects", icon: FileText, href: "#projects" },
     { title: "Contact", icon: Mail, href: "#contact" },
   ];
 
   const authItems: DockItem[] = user 
     ? [
-        { title: "Admin", icon: Settings, action: () => navigate("/admin") },
         { title: "Sign Out", icon: LogOut, action: signOut },
       ]
     : [

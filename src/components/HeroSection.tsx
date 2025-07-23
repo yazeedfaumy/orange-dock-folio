@@ -3,8 +3,13 @@ import { TypewriterEffect } from "./TypewriterEffect";
 import { Button } from "./ui/button";
 import { ArrowDown, Download } from "lucide-react";
 import heroImage from "../assets/hero-network.jpg";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function HeroSection() {
+  const [contactInfo, setContactInfo] = useState<any>(null);
+  const [aboutContent, setAboutContent] = useState<any>(null);
+
   const words = [
     { text: "Network" },
     { text: "Engineer" },
@@ -12,6 +17,31 @@ export function HeroSection() {
     { text: "Infrastructure", className: "text-primary" },
     { text: "Specialist", className: "text-primary" },
   ];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: contact } = await supabase
+        .from('contact_info')
+        .select('*')
+        .single();
+      
+      const { data: about } = await supabase
+        .from('about_content')
+        .select('*')
+        .single();
+      
+      if (contact) setContactInfo(contact);
+      if (about) setAboutContent(about);
+    };
+
+    fetchData();
+  }, []);
+
+  const handleDownloadCV = () => {
+    if (contactInfo?.cv_url) {
+      window.open(contactInfo.cv_url, '_blank');
+    }
+  };
 
   return (
     <section id="home" className="min-h-screen flex items-center justify-center relative overflow-hidden">
@@ -62,7 +92,7 @@ export function HeroSection() {
             >
               <h2 className="text-lg text-muted-foreground">Hello, I'm</h2>
               <h1 className="text-5xl lg:text-6xl font-bold bg-gradient-accent bg-clip-text text-transparent">
-                Alex Chen
+                {aboutContent?.title || "Alex Chen"}
               </h1>
             </motion.div>
 
@@ -74,9 +104,7 @@ export function HeroSection() {
               transition={{ delay: 0.8 }}
               className="text-xl text-muted-foreground max-w-lg leading-relaxed"
             >
-              Passionate about designing, implementing, and maintaining robust network 
-              infrastructures. Bringing 1 year of hands-on experience in enterprise 
-              networking solutions.
+              {aboutContent?.content || "Passionate about designing, implementing, and maintaining robust network infrastructures. Bringing 1 year of hands-on experience in enterprise networking solutions."}
             </motion.p>
 
             <motion.div
@@ -96,6 +124,8 @@ export function HeroSection() {
                 variant="outline" 
                 size="lg"
                 className="border-primary/50 hover:bg-primary/10"
+                onClick={handleDownloadCV}
+                disabled={!contactInfo?.cv_url}
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download CV

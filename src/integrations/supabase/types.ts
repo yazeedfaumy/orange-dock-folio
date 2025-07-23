@@ -86,6 +86,7 @@ export type Database = {
       contact_info: {
         Row: {
           created_at: string
+          cv_url: string | null
           email: string
           github_url: string | null
           id: string
@@ -98,6 +99,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          cv_url?: string | null
           email: string
           github_url?: string | null
           id?: string
@@ -110,6 +112,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          cv_url?: string | null
           email?: string
           github_url?: string | null
           id?: string
